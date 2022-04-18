@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="author" content="oxxo.studio" />
+    <meta name="copyright" content="oxxo.studio" />
+    <title>獲取錄音資訊 demo01 - OXXO.STUDIO</title>
+    <style>
+      #volumeThreshold {
+        width: 30%;
+      }
+
+      #d {
+        height: 0px;
+      }
+      #d:after {
+        content: "";
+        display: inline-block;
+        height: 100px;
+        width: px;
+      }
+
+      #d div {
+        display: inline-block;
+        width: 0.5px;
+        background: #a00;
+        margin: 0 0 0 1px;
+        vertical-align: bottom;
+      }
+
+      #FFTCap {
+        height: 25px;
+      }
+      #FFTCap:after {
+        content: "";
+        display: inline-block;
+        height: 100px;
+        width: px;
+      }
+
+      #FFTCap div {
+        display: inline-block;
+        width: 0.5px;
+        background: #a00;
+        margin: 0 0 0 1px;
+        vertical-align: bottom;
+      }
+
+      #blankRemain {
+        height: 80px;
+      }
+
+      #modelResult {
+        width: 800px;
+      }
+
+      #teachResult {
+        width: 800px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Tapping Test</h1>
+    <div>
+      <input type="radio" id="teach" name="mode" />
+      <label for="teach">Teach Mode </label>
+
+      <input type="radio" id="real" name="mode" />
+      <label for="real">Real Mode</label>
+    </div>
+
+    <div>
+      <input type="radio" id="teachGood" name="goodBad" />
+      <label for="teach">Good Sound</label>
+
+      <input type="radio" id="teachBad" name="goodBad" />
+      <label for="teachBad">Bad Sound</label>
+    </div>
+    <h3>Control Area:</h3>
+    <div>
+      <input
+        type="range"
+        min="1"
+        max="60000"
+        value="30000"
+        id="volumeThreshold"
+      />
+      <span>Volume Threshold Value: </span
+      ><span
+        id="volumeThresholdValue"
+        style="font-weight: bold; color: red"
+      ></span>
+    </div>
+
+    <p id="realMode"></p>
+    <p id="initializeButton"></p>
+    <p id="initialize"></p>
+    <button id="p">play</button>
+    <button id="s">pause</button>
+    <div id="d"></div>
+    <p id="blankRemain"></p>
+    <p id="Count">0</p>
+
+    <p id="tappingGate">Wait for tapping</p>
+    <div id="FFTCap"><p>FFT Capture here</p></div>
+    <p id="blankRemain"></p>
+    <p>New array: <span id="newArray"></span></p>
+    <button id="buttonDeleteArray">Delete new array?</button>
+    <p>ArrayList: <br /><span id="teachArrays"></span></p>
+    <p id="teachArrayCal"></p>
+    <p id="Calculating"></p>
+    <p>Log:</p>
+    <div>
+      <!-- <input type="text" id="teachresult" name="teachresult" /> -->
+      <label for="teachResult"></label>
+      <textarea
+        name="teachResult"
+        id="teachResult"
+        cols="30"
+        rows="10"
+      ></textarea>
+    </div>
+
+    <p id="MAX">
+      Max value: <span id="maxValue">0</span>, <span id="maxIndex">0</span> Hz
+    </p>
+    <p id="MaxHzGate">Wait for tapping</p>
+
+    <script>
+      window.AudioContext = window.AudioContext || window.webkitAudioContext;
+      navigator.getUserMedia =
+        navigator.getUserMedia || navigator.webkitGetUserMedia;
+
+      var freeze = 0; // for gate function
+      var teachArrayCount = 1;
+
+      var d = document.getElementById("d");
+      var FFTCap = document.getElementById("FFTCap");
+      for (var i = 0; i < 512; i++) {
+        d.innerHTML += "<div></div>";
+        FFTCap.innerHTML += "<div></div>";
+      }
+      var dd = document.querySelectorAll("#d div");
+      var FFTCapAll = document.querySelectorAll("#FFTCap div");
+
+      var s = document.getElementById("s");
+      var p = document.getElementById("p");
+      var timer;
+      var context = new AudioContext();
+      // console.log("audioContext=%o", AudioContext);
+
+      //control area
+      var volume = document.getElementById("volumeThreshold");
+      var volumeOutput = document.getElementById("volumeThresholdValue");
+      volumeOutput.innerHTML = volume.value;
+      volume.oninput = function () {
+        volumeOutput.textContent = this.value;
+      };
+
+      navigator.mediaDevices
+        .getUserMedia({ audio: true, video: false })
+        .then(function (stream) {
+          var microphone = context.createMediaStreamSource(stream);
+          var analyser = context.createAnalyser();
+          microphone.connect(analyser);
+          //analyser.connect(context.destination);
+
+          analyser.fftSize = 1024;
+          var bufferLength = analyser.frequencyBinCount;
+          var dataArray = new Uint8Array(analyser.fftSize);
+          analyser.getByteFrequencyData(dataArray); // FFT
+          var Gate = document.getElementById("tappingGate");
+
+          update();
+          context.resume();
+          s.onclick = function () {
+            clearTimeout(timer); // cancels a timeout previously
+          };
+
+          p.onclick = function () {
+            update();
+            context.resume(); // See also: https://www.crifan.com/js_chrome_warning_the_audiocontext_was_not_allowed_to_start/
+          };
+
+          // Delete unwanted array on teachMode
+          buttonDeleteArray.onclick = function () {
+            document.getElementById("newArray").textContent = "";
+          };
+
+          real.onclick = function () {
+            document.getElementById("realMode").innerHTML =
+              "<label for='selectModelFile'>Please select mode: </label><input type='file' id='selectModelFile' name='selectModelFile'>";
+            var input = document.querySelector("#selectModelFile");
+            input.addEventListener("change", checkFileExist);
+            function checkFileExist() {
+              let file = document.getElementById("selectModelFile");
+              let fileName = file.value.replace(/.*[\/\\]/, "");
+
+              document.getElementById("initializeButton").innerHTML =
+                fileName + ' <button id="startInitialize">Initialize?</button>';
+
+              startInitialize.onclick = function () {
+                document.getElementById("initialize").textContent =
+                  "Start initializing...";
+              };
+
+              // startInitialize.onclick = function () {
+              //   let needAppend = document.createTextNode(
+              //     " Start initializing..."
+              //   );
+              //   document.getElementById("initialize").appendChild(needAppend);
+              // };
+            }
+          };
+          teach.onclick = function () {
+            document.getElementById("realMode").innerHTML = "";
+          };
+
+          // update();
+
+          function update() {
+            // console.log(dataArray);
+            analyser.getByteFrequencyData(dataArray);
+            var totalCount = 0;
+            for (var j = 0; j < 512; j++) {
+              dd[j].style.height = dataArray[j] / 2 + "px";
+              dd[j].style.background =
+                "rgba(" + (255 - j) + "," + j * 2 + ",0,1)";
+              totalCount += dataArray[j];
+            }
+
+            ////////////////////////////////////////////////////////////
+            // console.log(totalCount);
+            var count = document.getElementById("Count");
+            count.innerHTML = totalCount;
+            gate(totalCount, dataArray);
+
+            ////////////////////////////////////////////////////////////
+
+            timer = setTimeout(update, 100); // sets a timer once the timer expires
+          }
+
+          ////////////////////////////////////////////////////////////
+          // Gate for knocking sound
+          function gate(totalCount, dataArray) {
+            if (
+              totalCount > volume.value &&
+              freeze === 0 &&
+              document.getElementById("Calculating").textContent === "" // check whether calculating button been pressed
+            ) {
+              Gate.innerHTML = "This is tapping";
+              FFTCapture(dataArray);
+              teachArraySend(dataArray);
+              getMax(dataArray);
+              document.getElementById("newArray").textContent = dataArray;
+              freeze = 1;
+            } else if (totalCount > volume.value && freeze === 1) {
+            } else {
+              Gate.innerHTML = "please tap";
+              freeze = 0;
+            }
+          }
+
+          // Capture knocking frequency
+          function FFTCapture(dataArray) {
+            // var Capture = document.getElementById("FFTCap");
+            // Capture.innerHTML = dataArray;
+
+            for (var j = 0; j < 512; j++) {
+              FFTCapAll[j].style.height = dataArray[j] / 2 + "px";
+              FFTCapAll[j].style.background =
+                "rgba(" + (255 - j) + "," + j * 2 + ",0,1)";
+            }
+          }
+
+          // show teach arrays and send arrays to calculate
+          function teachArraySend(dataArray) {
+            dataArrayOld1 = document.getElementById("newArray").textContent;
+            if (document.getElementById("teach").checked == true) {
+              // teach mode
+              if (document.getElementById("teachGood").checked == true) {
+                // teach Good sound
+                if (dataArrayOld1 !== "") {
+                  // check if user delete the incoming array
+                  document.getElementById("teachArrays").innerHTML +=
+                    "<button id='teachGoodDelete" +
+                    teachArrayCount +
+                    "'>Delete(ongoing)</button> <b>" +
+                    teachArrayCount +
+                    ",</b>1," +
+                    dataArrayOld1 +
+                    "<br>";
+                  teachArrayCount += 1;
+                }
+              } else {
+                //teach bad sound
+                if (dataArrayOld1 !== "") {
+                  // check if user delete the incoming array
+                  document.getElementById("teachArrays").innerHTML +=
+                    "<button id='teachGoodDelete" +
+                    teachArrayCount +
+                    "'>Delete(ongoing)</button> <b>" +
+                    teachArrayCount +
+                    ",</b>-1," +
+                    dataArrayOld1 +
+                    "<br>";
+                  teachArrayCount += 1;
+                }
+              }
+            }
+            // if there are some arrays, then show "calculate" and "delete all" buttons
+            if (document.getElementById("teachArrays").textContent !== "") {
+              document.getElementById("teachArrayCal").innerHTML =
+                '<button id="teachStartCalButton">Start Calculation</button> ' +
+                '<button id="arraysDelButton">Delete all arrays</button>';
+              // if "start calculation button" been pressed, then show "Calculating..." below
+              teachStartCalButton.onclick = function () {
+                document.getElementById("Calculating").textContent =
+                  "Calculating..."; ///////////////////////////////////////////////////////////////////////////////////////////////////////////////connection//
+              };
+              // if "del array button" been pressed, clear the arrays
+              arraysDelButton.onclick = function () {
+                document.getElementById("teachArrays").textContent = "";
+              };
+            }
+          }
+
+          // get Max volume frequency
+          function getMax(dataArray) {
+            function getMaxOfArray(dataArray) {
+              return Math.max.apply(null, dataArray);
+            }
+            var maxValue = getMaxOfArray(dataArray);
+            var maxIndex = dataArray.findIndex(
+              (element) => element === maxValue
+            );
+            // console.log(dataArray.findIndex((element) => element === maxValue));
+
+            document.getElementById("maxValue").innerHTML = maxValue;
+            document.getElementById("maxIndex").innerHTML = maxIndex;
+
+            if (maxIndex > 400) {
+              document.getElementById("MaxHzGate").innerHTML =
+                "good area (" + maxIndex + " Hz )";
+            } else {
+              document.getElementById("MaxHzGate").innerHTML =
+                "bad area (" + maxIndex + " Hz )";
+            }
+          }
+
+          //sleep
+          // function sleep(milliseconds) {
+          //   const date = Date.now();
+          //   let currentDate = null;
+          //   do {
+          //     currentDate = Date.now();
+          //   } while (currentDate - date < milliseconds);
+          // }
+
+          ////////////////////////////////////////////////////////////
+        })
+        .catch(function () {
+          console.log("error");
+        });
+    </script>
+  </body>
+</html>
