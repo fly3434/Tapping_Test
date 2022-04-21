@@ -161,6 +161,11 @@ def PredKeysToHtml(predResult, tapCount):
 ############# Main ############
 
 html_dir = input("Please enter the directory of html file: ")
+oneArrayLen = input("Please enter the array total length (default=1024): ")
+oneArrayLen = int(oneArrayLen)
+oneSegmentLen = input("Please enter the Segment length (default=32): ")
+oneSegmentLen = int(oneSegmentLen)
+
 
 driver = webdriver.Chrome()
 # driver.get('http://127.0.0.1:5500/project_test.html')
@@ -170,8 +175,8 @@ driver = webdriver.Chrome()
 driver.get('file:\\' + str(html_dir))
 # driver.get('file:///C:/Users/flyboy/Google%20drive/to_company/html_recorder/project_test.html')
 
-oneArrayLen = 1024
-oneSegmentLen = 32
+# oneArrayLen = 1024
+# oneSegmentLen = 32
 oldTap = ''
 initFirst_bool = True
 realX_testBool = False
