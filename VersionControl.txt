@@ -1,0 +1,36 @@
+
+VERSION  |                FILENAME                                   |      DATE       |       NOTE        |      LOG
+         |       back        |       front       |        css        |                 |                   |
+         |                   |                   |                   |                 |                   |
+----------------------------------------------------------------------------------------------------------------------------------------------------
+v.1      |    input1.0.py    | project_test.html |         -         | 20220222 before |  done to company  |       X
+         |                   |                   |                   |                 |                   |
+----------------------------------------------------------------------------------------------------------------------------------------------------
+v.1.2    |    input1.2.py    | project_test.html |         -         |    20220302     |  done to company  |  array ML length set to hand mode 
+         |                   |                   |                   |                 |                   |
+----------------------------------------------------------------------------------------------------------------------------------------------------
+v.2.1    |    input2.1.py    |    UI2.1.html     | bootstrap.min.css |    20220306     |  done to company  |  1. UI and backend get much prettier 
+         |                   |                   |                   |                 |                   |  2. Put all the event log on textbox "event log"
+         |                   |                   |                   |                 |                   |  3. Add new control element ("Spectrum valid span" and "One slice contain")
+         |                   |                   |                   |                 |                   |  4. Save file to database folder, if folder didn`t exist, create one
+         |                   |                   |                   |                 |                   |  5. Teach mode done, can switch to real mode. No need to restart
+         |                   |                   |                   |                 |                   |  6. Add more notes on code
+----------------------------------------------------------------------------------------------------------------------------------------------------
+v.3.0    |    input3.0.py    |    UI3.0.html     | bootstrap.min.css |    20220417     |                   |  1. Add CNN prediction
+         |                   |                   |                   |                 |                   |  2. Change "bad sound" symbol from "-1" to "0"
+         |                   |                   |                   |                 |                   |  3. set "regressor" as global variable
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Future work:
+1. Fix "good sound" and "bad sound" icon
+2. disable menu icon
+3. knocking gate get more sensitivity
+4. make the font size more smaller, then user can see the whole page
+5. 
+
+
+
+
+

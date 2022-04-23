@@ -9,7 +9,7 @@
       content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
     />
     <meta name="generator" content="Hugo 0.88.1" />
-    <title>Tapping testing UI2.1</title>
+    <title>Tapping testing UI3.0</title>
     <!-- <title>Jumbotron example · Bootstrap v5.1</title> -->
 
     <!-- Bootstrap core CSS -->
@@ -304,7 +304,7 @@
             } else if (document.getElementById("teachBad").checked == true) {
               //teach bad sound
               originTeachArrays +=
-                "Delete " + teachArrayCount + ",-1," + dataArray;
+                "Delete " + teachArrayCount + ",0," + dataArray;
             }
           }
           return originTeachArrays;
@@ -488,7 +488,7 @@
                     teachArrayCount +
                     ")'>Delete</button> <b>" +
                     teachArrayCount +
-                    ",</b>-1," +
+                    ",</b>0," +
                     dataArray.slice(0, indicesOfDataArray) +
                     " ......" +
                     "<br>" +
